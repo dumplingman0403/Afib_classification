@@ -21,7 +21,7 @@ import time
 from scipy.signal import spectrogram
 import gc
 
-gc.enable
+gc.enable()
 
 def SaveAsPickle(varables,file_name):
     with open(file_name, 'wb') as f:
@@ -229,15 +229,12 @@ def FindMedianAmp(templates):
     return Amplitude
 
 
-def PrepareFeatures():
-    
-    train_path = './training2017'
-    sample_path = './sample2017/validation'
+def PrepareFeatures(train_path = './training2017', sample_path = './sample2017/validation'):
     
     #training dataset feature extraction
     training = ImportFile(train_path)
-    
-    os.mkdir('./feature') #creat folder to save features
+    if os.path.isdir('./feature') == False:
+        os.mkdir('./feature') #creat folder to save features
     tn_Ts, tn_Filtered_ecg, tn_Rpeaks, tn_Templates_ts, tn_Templates, tn_Heart_rate_ts, tn_Heart_rate, tn_Label = FeatureExtraction(training)
     
     SaveAsPickle(tn_Ts, './feature/train_ts.pk1')
@@ -271,10 +268,12 @@ def PrepareFeatures():
     return tn_Templates, tn_Templates_ts, tt_Templates, tt_Templates_ts
 
 def SaveTemplates(tn_Templates, tn_Templates_ts, tt_Templates, tt_Templates_ts):
-    
-    os.mkdir('./ECG_templates') #creat folder
-    os.mkdir('./ECG_templates/train')
-    os.mkdir('./ECG_templates/test')
+    if os.path.isdir('./ECG_templates') == False:
+        os.mkdir('./ECG_templates') #creat folder
+    if os.path.isdir('./ECG_templates/train') == False:
+        os.mkdir('./ECG_templates/train')
+    if os.path.isdir('./ECG_templates/test') == False:
+        os.mkdir('./ECG_templates/test')
     
     save_path_1 = './ECG_templates/train'  
     PrepareTemplates(tn_Templates, tn_Templates_ts, save_path_1, 0, 3000 )
@@ -344,9 +343,12 @@ def SaveSpectrogram(tn_f, tn_t, tn_sxx, tt_f, tt_t, tt_sxx):
     
     
     #creat folder
-    os.mkdir('./ECG_spectrogram')
-    os.mkdir('./ECG_spectrogram/train')
-    os.mkdir('./ECG_spectrogram/test')
+    if os.path.isdir('./ECG_spectrogram') == False:
+        os.mkdir('./ECG_spectrogram')
+    if os.path.isdir('./ECG_spectrogram/train') == False:
+        os.mkdir('./ECG_spectrogram/train')
+    if os.path.isdir('./ECG_spectrogram/test') == False:
+        os.mkdir('./ECG_spectrogram/test')
     
     #save figure
     save_path_1 = './ECG_spectrogram/train'
@@ -467,8 +469,9 @@ def get_SpecgInput():
 
 '''
 test
-'''
+
 _, _, _, _ = PrepareFeatures()
 get_MedAmpInput()
 get_TempInput()
 get_SpecgInput()
+'''
