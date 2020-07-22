@@ -443,8 +443,12 @@ def get_SpecgInput():
     
 
     
-    
-    
+if __name__ == "__main__":
+    _, _, _, _ = PrepareFeatures()
+    get_MedAmpInput()
+    get_TempInput()
+    get_SpecgInput()
+
     
     
 
