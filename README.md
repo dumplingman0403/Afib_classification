@@ -1,9 +1,9 @@
-#Atrial Fibrillation Classification via 1D-CNN and 2D-CNN
+# Atrial Fibrillation Classification via 1D-CNN and 2D-CNN
 
-##Abstract
+## Abstract
 
-##Dataset
+## Dataset
 
-##Methodology
+## Methodology
 
-##Conclusion
+## Conclusion
