@@ -4,9 +4,12 @@ from tensorflow.keras.layers import Flatten, Dropout, BatchNormalization
 from tensorflow.keras.layers import Conv2D, MaxPooling2D
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, Callback, TensorBoard
+import numpy as np
+import os
+from datetime import datetime
+logdir = './logs'
 
-
-def get_1DCNN(x_train, y_train, x_test, y_test, epochs = 50):
+def get_1DCNN(x_train, y_train, x_test, y_test, name, epochs = 50):
 
     model = Sequential()
     model.add(Conv1D(16, 3, activation= 'relu', \
@@ -33,9 +36,11 @@ def get_1DCNN(x_train, y_train, x_test, y_test, epochs = 50):
     model.compile(loss = 'categorical_crossentropy',
                   optimizer = 'adam',
                   metrics = ['accuracy'])
-    
+    now = datetime.now()
+    now = now.strftime("%H:%M:%S")
     callback = [EarlyStopping(monitor = 'val_loss', patience = 8),
-                ModelCheckpoint(filepath ='1DCNN_best_model.h5', monitor = 'val_loss', save_best_only = True)]
+                ModelCheckpoint(filepath ='1DCNN_best_model.h5', monitor = 'val_loss', save_best_only = True),
+                TensorBoard(log_dir='logs/{}{}'.format(now, name), histogram_freq=1)]
 
     history = model.fit(x_train, y_train, 
                         batch_size = 32, 
@@ -43,13 +48,13 @@ def get_1DCNN(x_train, y_train, x_test, y_test, epochs = 50):
                         callbacks = callback, 
                         validation_data = (x_test, y_test))
     
-    return history, model
+    return model, history
 
 
 
 
 
-def get_2DCNN(x_train, y_train, x_test, y_test, epochs =50):
+def get_2DCNN(x_train, y_train, x_test, y_test, name, epochs =50):
     nClass = 4
     model = Sequential()
     model.add(Conv2D(32, (3,3), activation = 'relu', input_shape = x_train.shape[1:]))
@@ -70,8 +75,11 @@ def get_2DCNN(x_train, y_train, x_test, y_test, epochs =50):
 
     model.compile(optimizer = 'adam', loss = 'categorical_crossentropy', 
                   metrics = ['accuracy'])
+    now = datetime.now()
+    now = now.strftime("%H:%M:%S")
     callbacks = [EarlyStopping(monitor='val_loss', patience = 20), 
-                 ModelCheckpoint(filepath='best_model.h5', monitor='val_loss', save_best_only=True)
+                 ModelCheckpoint(filepath='best_model.h5', monitor='val_loss', save_best_only=True),
+                 TensorBoard(log_dir= 'logs/{}{}'.format(now, name), histogram_freq=1)
                  ]
     history = model.fit(x_train, y_train, batch_size = 32, epochs = epochs,
                         callbacks = callbacks, validation_data = (x_test, y_test) )

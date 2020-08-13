@@ -39,10 +39,14 @@ Heartbeat segmentation
 ### Training and Validation
 
 ## Usage
-execute preprocess.py to prepare training input for further CNN training
+- 1. Download ECG dataset:
+Download dataset in [here](https://physionet.org/static/published-projects/challenge-2017/af-classification-from-a-short-single-lead-ecg-recording-the-physionet-computing-in-cardiology-challenge-2017-1.0.0.zip) and extract **training2017** and **sample2017** folders.
+
+- 2. Execute preprocess.py to prepare training input for further CNN training
 ```bash
 python3 Preprocess.py
 ``` 
+- 3. 
 ## Demo
 - 1DCNN_med_wave.ipynb : Use median wave extraction method to select features as training data, and training data with one dimension convolution neural network. 
 - 2DCNN_templates.ipynb: Use heartbeat extraction method to generate heartbeat images as training data, and training data with two dimension convolution neural network.
