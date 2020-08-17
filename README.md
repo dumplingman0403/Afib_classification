@@ -32,14 +32,16 @@ Overview
 ### Preprocessing
 #### PSD spectrogram
 
-<img src='image/specg.png' width=70% height=75%>
+<img src='image/specg.png' alt='spectrogram' width=70% height=75%>
 
 ### Segmentation
 QRS complex detection
 
-<img src='image/QRS_img.png' width=70% height='auto'>
+<img src='image/QRS_img.png' alt='QRS_image' width=70% height='auto'>
 
 Heartbeat segmentation
+
+<img src='image/segmentation.png' alt='seg_img' width=70% height='auto'>
 
 ### Feature
 ### Training and Validation
