@@ -26,10 +26,14 @@ In dataset, there are total 8528 short single lead ECG recordings collected by A
 
 
 ## Methodology
-### Preprocessing
-FIR bandpass filter
+Overview
 
-PSD spectrogram
+![overview_img](image/method_flow.png)
+### Preprocessing
+#### PSD spectrogram
+
+<img src='image/specg.png' width=60% height=60%>
+
 ### Segmentation
 QRS complex detection
 
@@ -60,3 +64,5 @@ tensorboard --logdir logs/
 - 2DCNN_specg.ipynb: Use spectrogram as training data, and training data with two dimension convolution neural network.  
 
 ## Conclusion
+
+## Reference

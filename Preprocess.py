@@ -26,6 +26,7 @@ gc.enable()
 def SaveAsPickle(varables,file_name):
     with open(file_name, 'wb') as f:
         pickle.dump(varables, f)
+
 def LoadPickle(file_name):
     file = pickle.load(open(file_name, 'rb'))
     return file
@@ -471,11 +472,3 @@ if __name__ == "__main__":
     
 
 
-'''
-test
-
-_, _, _, _ = PrepareFeatures()
-get_MedAmpInput()
-get_TempInput()
-get_SpecgInput()
-'''
