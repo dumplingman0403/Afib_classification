@@ -43,7 +43,11 @@ Heartbeat segmentation
 
 <img src='image/segmentation.png' alt='seg_img' width=70% height='auto'>
 
+
 ### Feature
+
+<img src='image/feature extraction2.png' alt='feature_extraction_img' >
+
 ### Training and Validation
 
 ## Usage
