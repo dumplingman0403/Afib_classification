@@ -37,6 +37,8 @@ Overview
 ### Segmentation
 QRS complex detection
 
+Apply [Hamilton QRS complex detection algorithm](http://www.eplimited.com/osea13.pdf) to locate the R peaks of ECG signals. 
+
 <img src='image/QRS_img.png' alt='QRS_image' width=70% height='auto'>
 
 Heartbeat segmentation
@@ -44,9 +46,11 @@ Heartbeat segmentation
 <img src='image/segmentation.png' alt='seg_img' width=70% height='auto'>
 
 
-### Feature
-
-<img src='image/feature extraction2.png' alt='feature_extraction_img' >
+### Feature Extraction
+<figure>
+    <img src='image/feature extraction2.png' alt='feature_extraction_img' >
+    <figcaption style='text-align:center'>Feature extraction overview</figcaption>
+</figure>
 
 ### Training and Validation
 
@@ -74,3 +78,6 @@ tensorboard --logdir logs/
 ## Conclusion
 
 ## Reference
+- [Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., ... & Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220.](https://pubmed.ncbi.nlm.nih.gov/10851218/)
+
+- [P. Hamilton, "Open source ECG analysis," Computers in Cardiology, Memphis, TN, USA, 2002, pp. 101-104, doi: 10.1109/CIC.2002.1166717.](https://ieeexplore.ieee.org/abstract/document/1166717?casa_token=Wz46J4iSnmgAAAAA:ePN9VyYd_ZoBLve38oJTafWl_hXUjcWSEZzUxnLUhW-IXjipUcJeiwoxo3zsMM0z7DC1Po8)
