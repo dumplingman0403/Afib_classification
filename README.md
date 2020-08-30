@@ -49,10 +49,17 @@ Heartbeat segmentation
 ### Feature Extraction
 <figure>
     <img src='image/feature extraction2.png' alt='feature_extraction_img' >
-    <figcaption style='text-align:center'>Feature extraction overview</figcaption>
+    <!--<figcaption style='text-align:center'>Feature extraction overview</figcaption>-->
 </figure>
 
 ### Training and Validation
+1D-CNN
+
+<img src='image/1d_cnn.png'>
+
+2D-CNN
+
+<img src='image/2d_cnn.png'>
 
 ## Usage
 1. Download ECG dataset:
