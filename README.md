@@ -55,11 +55,11 @@ Heartbeat segmentation
 ### Training and Validation
 1D-CNN
 
-<img src='image/1d_cnn.png'>
+<img src='image/1d_cnn.png' alt='1d_cnn_img'>
 
 2D-CNN
 
-<img src='image/2d_cnn.png'>
+<img src='image/2d_cnn.png' alt='2d_cnn_img'>
 
 ## Usage
 1. Download ECG dataset:
@@ -83,6 +83,10 @@ tensorboard --logdir logs/
 - 2DCNN_specg.ipynb: Use spectrogram as training data, and training data with two dimension convolution neural network.  
 
 ## Conclusion
+
+<img src='image/table1.png' alt='conclusion_table_image'>
+
+
 
 ## Reference
 - [Goldberger, A., Amaral, L., Glass, L., Hausdorff, J., Ivanov, P. C., Mark, R., ... & Stanley, H. E. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new research resource for complex physiologic signals. Circulation [Online]. 101 (23), pp. e215–e220.](https://pubmed.ncbi.nlm.nih.gov/10851218/)
