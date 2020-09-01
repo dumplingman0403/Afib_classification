@@ -8,6 +8,7 @@
 - [opencv](https://opencv.org/)
 - [pandas](http://https://pandas.pydata.org/)
 - [TensorFlow](https://www.tensorflow.org/)
+- [scipy](https://www.scipy.org/)
 
 ## Dataset
 In this project, I use the open ECG dataset from [AF Classification from a Short Single Lead ECG Recording - The PhysioNet Computing in Cardiology Challenge 2017](https://physionet.org/content/challenge-2017/1.0.0/), dataset can be found in [here](https://physionet.org/static/published-projects/challenge-2017/af-classification-from-a-short-single-lead-ecg-recording-the-physionet-computing-in-cardiology-challenge-2017-1.0.0.zip).
