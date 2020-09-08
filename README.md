@@ -53,7 +53,7 @@ Heartbeat segmentation
     <!--<figcaption style='text-align:center'>Feature extraction overview</figcaption>-->
 </figure>
 
-### Training and Validation
+### Model
 1D-CNN
 
 <img src='image/1d_cnn.png' alt='1d_cnn_img'>
