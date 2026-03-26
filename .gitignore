@@ -1,4 +1,7 @@
 .vscode
+.venv/
 .DS_Store
 __pycache__/
 plot_data.py
+.ipynb_checkpoints/
+data/
