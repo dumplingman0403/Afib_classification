@@ -59,13 +59,14 @@ def plot_ecg(ecg=ecg, ts=ts, filt_ecg=filt_ecg, rpeaks=rpeaks, dot=False, save=D
 
 def plot_heartbeat(templates_ts=templates_ts, templates=templates, save=DEFAULT_OUTPUT / "heartbeat_plot.png", show=False):
     plt.figure(figsize=(8, 4), dpi=300)
-    plt.plot(templates_ts, templates.T, color="blue", alpha=0.3, label="Heartbeats")
+    plt.plot(templates_ts, templates.T, color="blue", alpha=0.3)
     median_template = np.median(templates, axis=0)
     plt.plot(templates_ts, median_template, color="black", linewidth=2.0, label="Median Heartbeat")
     plt.title("Extracted Heartbeats")
     # plt.xlabel("Time (s)")
     plt.xlabel("Time relative to R-peak (s)")
     plt.ylabel("Amplitude (mV)")
+    plt.legend(loc="upper left")
     plt.grid()
     plt.tight_layout()
     plt.savefig(save, dpi=600, bbox_inches="tight")
