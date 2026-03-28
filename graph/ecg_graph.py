@@ -27,6 +27,8 @@ ecg = loadmat(DEFAULT_INPUT)["val"][0] / DEFAULT_SCALE
 # heart_rate : Instantaneous heart rate (bpm).
 ts, filt_ecg, rpeaks, templates_ts, templates, heart_rate_ts, heart_rate = ecgprocessing.ecg(ecg, DEFAULT_FS, show=False, interactive=False)
 
+beat_times = rpeaks / DEFAULT_FS
+
 def plot_ecg(ecg=ecg, ts=ts, filt_ecg=filt_ecg, rpeaks=rpeaks, dot=False, save=DEFAULT_OUTPUT / "ecg_plot.png", show=False):
     
     plt.figure(figsize=(8, 4), dpi=300)
@@ -426,75 +428,81 @@ def save_extracted_heartbeats(
 def plot_ecg_2d_waterfall(
     templates_ts,
     templates,
-    beat_indices=None,
-    offset=0.6,
+    beat_times=None,
+    y_mode="time",
+    offset=1.0,
     save_path=None,
     show_dpi=300,
     save_dpi=600,
     show_rpeak=True
 ):
     """
-    2D waterfall plot for beat-to-beat variation
+    2D waterfall plot for beat-to-beat ECG variation
 
+    Parameters
+    ----------
     templates_ts : 1D array
-        relative time axis (e.g. -0.2 ~ 0.4 sec)
+        relative time axis within each beat (e.g. -0.2 ~ 0.4 sec)
 
     templates : 2D array (n_beats, n_samples)
-        extracted beats aligned at R peak
+        ECG beats aligned at R peak
 
-    offset : float
-        vertical spacing between beats
+    beat_times : 1D array, required when y_mode='time'
+        R-peak time of each beat in seconds
+
+    y_mode : str
+        'time' — y axis shows R-peak time
+        'index' — y axis shows beat index
     """
+    templates = np.asarray(templates)
     n_beats = len(templates)
-    colors = cm.viridis(np.linspace(0, 1, n_beats))
-    if beat_indices is None:
-        beat_indices = np.arange(n_beats)
-    else:
-        beat_indices = np.asarray(beat_indices)
-        if len(beat_indices) != n_beats:
-            raise ValueError("len(beat_indices) must match len(templates)")
 
-    fig = plt.figure(figsize=(6, 4), dpi=show_dpi)
+    if y_mode == "time":
+        if beat_times is None:
+            raise ValueError("beat_times must be provided when y_mode='time'")
+        y_values = np.asarray(beat_times)
+        if len(y_values) != n_beats:
+            raise ValueError("beat_times length must match number of beats")
+        y_plot = y_values - y_values.min()
+        ylabel = "R-peak time (s)"
+
+    elif y_mode == "index":
+        y_values = np.arange(n_beats, dtype=float)
+        y_plot = y_values
+        ylabel = "Beat index"
+
+    else:
+        raise ValueError("y_mode must be 'time' or 'index'")
+
+    colors = cm.viridis(np.linspace(0, 1, n_beats))
+
+    fig = plt.figure(figsize=(7, 4), dpi=show_dpi)
     ax = fig.add_subplot(111)
 
     for i, beat in enumerate(templates):
-
         ax.plot(
             templates_ts,
-            beat + i * offset,
+            beat + y_plot[i] * offset,
             color=colors[i],
             linewidth=1.2
         )
 
-    # R peak reference line
     if show_rpeak:
-        ax.axvline(
-            0,
-            linestyle="--",
-            linewidth=1,
-            color="black"
-        )
+        ax.axvline(0, linestyle="--", linewidth=1, color="black")
 
     ax.set_xlabel("Time relative to R-peak (s)")
-    ax.set_ylabel("Beat index (offset)")
+    ax.set_ylabel(ylabel)
 
-    tick_step = max(1, n_beats // 5)
-    tick_idx = np.arange(0, n_beats, tick_step)
-    ax.set_yticks(tick_idx * offset)
-    ax.set_yticklabels(beat_indices[tick_idx])
+    tick_count = min(6, n_beats)
+    tick_idx = np.linspace(0, n_beats - 1, tick_count).astype(int)
+    ax.set_yticks(y_plot[tick_idx] * offset)
+    ax.set_yticklabels(np.round(y_values[tick_idx], 2))
 
-    # ax.set_title("Beat-to-beat ECG variation (waterfall view)")
     ax.grid(alpha=0.3)
-
     plt.tight_layout()
 
-
     if save_path:
-        plt.savefig(
-            save_path,
-            dpi=save_dpi,
-            bbox_inches="tight"
-        )
+        plt.savefig(save_path, dpi=save_dpi, bbox_inches="tight")
 
     plt.show()
     plt.close()
@@ -502,7 +510,9 @@ def plot_ecg_2d_waterfall(
 def plot_ecg_3d_waterfall(
     templates_ts,
     templates,
+    beat_times=None,
     beat_indices=None,
+    y_mode="time",  # "time" or "index"
     save_path=None,
     show_dpi=300,
     save_dpi=600,
@@ -513,53 +523,88 @@ def plot_ecg_3d_waterfall(
     """
     3D waterfall plot for ECG beat-to-beat variation
 
-    parameters
+    Parameters
     ----------
     templates_ts : 1D array
-        relative time axis (e.g. -0.2 ~ 0.4 sec)
+        relative time axis within beat
+        example: -0.2 ~ 0.4 sec
 
     templates : 2D array (n_beats, n_samples)
-        extracted ECG beats aligned at R peak
+        ECG beats aligned at R peak
 
-    elev : int
-        vertical viewing angle
+    beat_times : 1D array
+        real time of each beat (usually R peak time in seconds)
 
-    azim : int
-        horizontal rotation angle
+    normalize_time : bool
+        shift first beat to time zero for better visualization
     """
+
+    templates = np.asarray(templates)
+
+    # beat_times = np.asarray(beat_times)
+
+    n_beats = len(templates)
+
+    if beat_indices is None:
+        beat_indices = np.arange(n_beats)
+    
+
+    if y_mode == "time":
+        if beat_times is None:
+            raise ValueError("beat_times must be provided when y_mode='time'")
+        y_values = np.asarray(beat_times)
+        if len(y_values) != n_beats:
+            raise ValueError("beat_times length must match number of beats")
+        y_plot = y_values - y_values.min()
+        ylabel = "R peak time (s)"
+
+    elif y_mode == "index":
+        y_values = np.arange(n_beats)
+        y_plot = y_values
+        ylabel = "Beat index"
+
+    else:
+        raise ValueError("y_mode must be 'time' or 'index'")
+    colors = cm.viridis(np.linspace(0, 1, n_beats))
+
     fig = plt.figure(figsize=(8, 6), dpi=show_dpi)
     ax = fig.add_subplot(111, projection="3d")
 
-    n_beats = len(templates)
-    if beat_indices is None:
-        beat_indices = np.arange(n_beats)
-    else:
-        beat_indices = np.asarray(beat_indices)
-
-    colors = cm.viridis(np.linspace(0, 1, n_beats))
     for i, beat in enumerate(templates):
+
         ax.plot(
             templates_ts,
-            np.full(len(templates_ts), i),
+            np.full_like(templates_ts, y_plot[i]),
             beat,
             color=colors[i],
             linewidth=linewidth
         )
 
-    ax.set_xlabel("Time relative to R-peak (s)", labelpad=5)
-    ax.set_ylabel("Beat index", labelpad=5)
-    ax.set_zlabel("Amplitude (mV)", labelpad=5)
+    ax.set_xlabel("Time relative to R-peak (s)", labelpad=8)
+    ax.set_ylabel(ylabel, labelpad=8)
+    ax.set_zlabel("Amplitude (mV)", labelpad=8)
 
-    tick_step = max(1, n_beats // 5)
-    tick_idx = np.arange(0, n_beats, tick_step)
-    ax.set_yticks(tick_idx)
-    ax.set_yticklabels(beat_indices[tick_idx])
+    # y ticks
+    tick_count = min(6, n_beats)
+
+    tick_idx = np.linspace(
+        0,
+        n_beats - 1,
+        tick_count
+    ).astype(int)
+
+    ax.set_yticks(y_plot[tick_idx])
+
+    ax.set_yticklabels(
+        np.round(y_values[tick_idx], 2)
+    )
 
     ax.view_init(elev=elev, azim=azim)
 
-    fig.subplots_adjust(left=0.1, right=0.95, bottom=0.1, top=0.95)
+    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95)
 
     if save_path:
+
         plt.savefig(
             save_path,
             dpi=save_dpi,
@@ -570,13 +615,35 @@ def plot_ecg_3d_waterfall(
 
     plt.close(fig)
 
-def plot_ecg_surface_plotly(templates_ts, templates, save_path=None, show=True):
 
-    X, Y = np.meshgrid(
-        templates_ts,
-        np.arange(len(templates))
-    )
+def plot_ecg_surface_plotly(
+    templates_ts,
+    templates,
+    beat_times=None,
+    y_mode="time",
+    save_path=None,
+    show=True
+):
+    templates = np.asarray(templates)
+    n_beats = len(templates)
 
+    if y_mode == "time":
+        if beat_times is None:
+            raise ValueError("beat_times must be provided when y_mode='time'")
+        y_values = np.asarray(beat_times)
+        if len(y_values) != n_beats:
+            raise ValueError("beat_times length must match number of beats")
+        y_plot = y_values - y_values.min()
+        yaxis_title = "R-peak time (s)"
+
+    elif y_mode == "index":
+        y_plot = np.arange(n_beats, dtype=float)
+        yaxis_title = "Beat index"
+
+    else:
+        raise ValueError("y_mode must be 'time' or 'index'")
+
+    X, Y = np.meshgrid(templates_ts, y_plot)
     Z = templates
 
     fig = go.Figure(
@@ -592,8 +659,8 @@ def plot_ecg_surface_plotly(templates_ts, templates, save_path=None, show=True):
 
     fig.update_layout(
         scene=dict(
-            xaxis_title="Time relative to R peak (s)",
-            yaxis_title="Beat index",
+            xaxis_title="Time relative to R-peak (s)",
+            yaxis_title=yaxis_title,
             zaxis_title="Amplitude (mV)"
         )
     )
@@ -604,222 +671,223 @@ def plot_ecg_surface_plotly(templates_ts, templates, save_path=None, show=True):
     if show:
         fig.show()
 
-def plot_ecg_surface_plotly_2(
-    templates_ts,
-    templates,
-    beat_indices=None,
-    max_beats=25,
-    save_html=None,
-    save_png=None
-):
+# def plot_ecg_surface_plotly_2(
+#     templates_ts,
+#     templates,
+#     beat_indices=None,
+#     max_beats=25,
+#     save_html=None,
+#     save_png=None
+# ):
 
-    # 避免 surface 太密
-    if len(templates) > max_beats:
+#     # 避免 surface 太密
+#     if len(templates) > max_beats:
 
-        idx = np.linspace(
-            0,
-            len(templates)-1,
-            max_beats,
-            dtype=int
-        )
+#         idx = np.linspace(
+#             0,
+#             len(templates)-1,
+#             max_beats,
+#             dtype=int
+#         )
 
-        templates = templates[idx]
+#         templates = templates[idx]
 
-        if beat_indices is not None:
-            beat_indices = beat_indices[idx]
-        else:
-            beat_indices = idx
+#         if beat_indices is not None:
+#             beat_indices = beat_indices[idx]
+#         else:
+#             beat_indices = idx
 
-    else:
+#     else:
 
-        if beat_indices is None:
-            beat_indices = np.arange(len(templates))
-
-
-    X, Y = np.meshgrid(
-        templates_ts,
-        beat_indices
-    )
-
-    Z = templates
+#         if beat_indices is None:
+#             beat_indices = np.arange(len(templates))
 
 
-    fig = go.Figure(
-        data=[
-            go.Surface(
+#     X, Y = np.meshgrid(
+#         templates_ts,
+#         beat_indices
+#     )
 
-                x=X,
-                y=Y,
-                z=Z,
-
-                colorscale="Viridis",
-
-                showscale=True,
-
-                colorbar=dict(
-                    title="Amplitude (mV)"
-                ),
-
-                contours = {
-                    "z": dict(
-                        show=True,
-                        usecolormap=True,
-                        highlightwidth=1
-                    )
-                }
-            )
-        ]
-    )
+#     Z = templates
 
 
-    fig.update_layout(
+#     fig = go.Figure(
+#         data=[
+#             go.Surface(
 
-        width=800,
-        height=500,
+#                 x=X,
+#                 y=Y,
+#                 z=Z,
 
-        scene=dict(
+#                 colorscale="Viridis",
 
-            xaxis_title="Time relative to R-peak (s)",
+#                 showscale=True,
 
-            yaxis_title="Beat index (temporal order)",
+#                 colorbar=dict(
+#                     title="Amplitude (mV)"
+#                 ),
 
-            zaxis_title="Amplitude (mV)",
-
-            xaxis=dict(
-                backgroundcolor="white"
-            ),
-
-            yaxis=dict(
-                backgroundcolor="white"
-            ),
-
-            zaxis=dict(
-                backgroundcolor="white"
-            ),
-
-            aspectratio=dict(
-                x=1.6,
-                y=1,
-                z=0.7
-            ),
-
-            camera=dict(
-                eye=dict(
-                    x=1.6,
-                    y=1.4,
-                    z=0.8
-                )
-            )
-        ),
-
-        font=dict(
-            size=14
-        ),
-
-        margin=dict(
-            l=0,
-            r=0,
-            b=0,
-            t=30
-        )
-    )
+#                 contours = {
+#                     "z": dict(
+#                         show=True,
+#                         usecolormap=True,
+#                         highlightwidth=1
+#                     )
+#                 }
+#             )
+#         ]
+#     )
 
 
-    if save_html:
+#     fig.update_layout(
 
-        fig.write_html(
-            save_html,
-            include_plotlyjs="cdn"
-        )
+#         width=800,
+#         height=500,
+
+#         scene=dict(
+
+#             xaxis_title="Time relative to R-peak (s)",
+
+#             yaxis_title="Beat index (temporal order)",
+
+#             zaxis_title="Amplitude (mV)",
+
+#             xaxis=dict(
+#                 backgroundcolor="white"
+#             ),
+
+#             yaxis=dict(
+#                 backgroundcolor="white"
+#             ),
+
+#             zaxis=dict(
+#                 backgroundcolor="white"
+#             ),
+
+#             aspectratio=dict(
+#                 x=1.6,
+#                 y=1,
+#                 z=0.7
+#             ),
+
+#             camera=dict(
+#                 eye=dict(
+#                     x=1.6,
+#                     y=1.4,
+#                     z=0.8
+#                 )
+#             )
+#         ),
+
+#         font=dict(
+#             size=14
+#         ),
+
+#         margin=dict(
+#             l=0,
+#             r=0,
+#             b=0,
+#             t=30
+#         )
+#     )
 
 
-    if save_png:
+#     if save_html:
 
-        fig.write_image(
-            save_png,
-            scale=3
-        )
+#         fig.write_html(
+#             save_html,
+#             include_plotlyjs="cdn"
+#         )
 
 
-    return fig
+#     if save_png:
 
-def plot_ecg_ridgeplot(
-    templates_ts,
-    templates,
-    beat_indices=None,
-    max_beats=20,
-    save_path=None,
-    dpi=600
-):
-    if len(templates) > max_beats:
-        idx = np.linspace(0, len(templates) - 1, max_beats, dtype=int)
-        templates = templates[idx]
-        beat_indices = idx if beat_indices is None else beat_indices[idx]
-    else:
-        if beat_indices is None:
-            beat_indices = np.arange(len(templates))
+#         fig.write_image(
+#             save_png,
+#             scale=3
+#         )
 
-    beat_labels = [str(int(b)) for b in beat_indices]
 
-    df = pd.concat(
-        [
-            pd.DataFrame({"time": templates_ts, "amplitude": beat, "beat": label})
-            for beat, label in zip(templates, beat_labels)
-        ],
-        ignore_index=True
-    )
+#     return fig
 
-    sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
-    palette = sns.cubehelix_palette(len(beat_labels), rot=-.25, light=.7)
+# def plot_ecg_ridgeplot(
+#     templates_ts,
+#     templates,
+#     beat_indices=None,
+#     max_beats=20,
+#     save_path=None,
+#     dpi=600
+# ):
+#     if len(templates) > max_beats:
+#         idx = np.linspace(0, len(templates) - 1, max_beats, dtype=int)
+#         templates = templates[idx]
+#         beat_indices = idx if beat_indices is None else beat_indices[idx]
+#     else:
+#         if beat_indices is None:
+#             beat_indices = np.arange(len(templates))
 
-    g = sns.FacetGrid(
-        df,
-        row="beat",
-        row_order=beat_labels,
-        hue="beat",
-        hue_order=beat_labels,
-        aspect=6,
-        height=0.5,
-        palette=palette
-    )
+#     beat_labels = [str(int(b)) for b in beat_indices]
 
-    def fill_ecg(time, amplitude, color, **kwargs):
-        plt.gca().fill_between(time, amplitude, alpha=1, color=color)
+#     df = pd.concat(
+#         [
+#             pd.DataFrame({"time": templates_ts, "amplitude": beat, "beat": label})
+#             for beat, label in zip(templates, beat_labels)
+#         ],
+#         ignore_index=True
+#     )
 
-    g.map(fill_ecg, "time", "amplitude")
-    g.map(sns.lineplot, "time", "amplitude", color="w", linewidth=2, clip_on=False)
-    g.map(sns.lineplot, "time", "amplitude", linewidth=1.2, clip_on=False)
+#     sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+#     palette = sns.cubehelix_palette(len(beat_labels), rot=-.25, light=.7)
 
-    def label_beat(time, amplitude, color, label):
-        plt.gca().text(
-            0.02, 0.2, label,
-            fontweight="bold", color=color,
-            ha="left", va="center",
-            transform=plt.gca().transAxes
-        )
+#     g = sns.FacetGrid(
+#         df,
+#         row="beat",
+#         row_order=beat_labels,
+#         hue="beat",
+#         hue_order=beat_labels,
+#         aspect=6,
+#         height=0.5,
+#         palette=palette
+#     )
 
-    g.map(label_beat, "time", "amplitude")
+#     def fill_ecg(time, amplitude, color, **kwargs):
+#         plt.gca().fill_between(time, amplitude, alpha=1, color=color)
 
-    for ax in g.axes.flat:
-        ax.axvline(0, linestyle="--", linewidth=0.8, color="gray", clip_on=False)
+#     g.map(fill_ecg, "time", "amplitude")
+#     g.map(sns.lineplot, "time", "amplitude", color="w", linewidth=2, clip_on=False)
+#     g.map(sns.lineplot, "time", "amplitude", linewidth=1.2, clip_on=False)
 
-    g.figure.subplots_adjust(hspace=-0.5)
-    g.set_titles("")
-    g.set(yticks=[], ylabel="")
-    g.despine(bottom=True, left=True)
+#     def label_beat(time, amplitude, color, label):
+#         plt.gca().text(
+#             0.02, 0.2, label,
+#             fontweight="bold", color=color,
+#             ha="left", va="center",
+#             transform=plt.gca().transAxes
+#         )
 
-    for ax in g.axes.flat[:-1]:
-        ax.set_xlabel("")
-    g.axes.flat[-1].set_xlabel("Time relative to R-peak (s)")
+#     g.map(label_beat, "time", "amplitude")
 
-    if save_path:
-        plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+#     for ax in g.axes.flat:
+#         ax.axvline(0, linestyle="--", linewidth=0.8, color="gray", clip_on=False)
 
-    plt.show()
-    plt.close()
+#     g.figure.subplots_adjust(hspace=-0.5)
+#     g.set_titles("")
+#     g.set(yticks=[], ylabel="")
+#     g.despine(bottom=True, left=True)
+
+#     for ax in g.axes.flat[:-1]:
+#         ax.set_xlabel("")
+#     g.axes.flat[-1].set_xlabel("Time relative to R-peak (s)")
+
+#     if save_path:
+#         plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
+
+#     plt.show()
+#     plt.close()
 
 if __name__ == "__main__":
 
+    
     plot_ecg(
         ecg=ecg,
         ts=ts,
@@ -833,17 +901,40 @@ if __name__ == "__main__":
     plot_ecg_2d_waterfall(
         templates_ts,
         templates[:15],
-        beat_indices=np.arange(15),
-        offset=0.6,
-        save_path=DEFAULT_OUTPUT / "ecg_waterfall_2d_15.png"
+        beat_times=beat_times[:15],
+        offset=3,
+        save_path=DEFAULT_OUTPUT / "ecg_waterfall_2d_15_time.png"
+    )
+
+    plot_ecg_2d_waterfall(
+        templates_ts,
+        templates,
+        beat_times=beat_times,
+        offset=3,
+        save_path=DEFAULT_OUTPUT / "ecg_waterfall_2d_all_time.png"
     )
 
     
+
+    # first 15 beats for clearer visualization
     plot_ecg_3d_waterfall(
         templates_ts,
         templates[:15],
-        beat_indices=np.arange(15),
-        save_path=DEFAULT_OUTPUT / "ecg_waterfall_3d_15.png",
+        y_mode="time",
+        beat_times=beat_times[:15],
+        save_path=DEFAULT_OUTPUT / "ecg_waterfall_3d_15_time.png",
+        elev=30,
+        azim=-60,
+        linewidth=1.0
+    )
+
+    # all beats
+    plot_ecg_3d_waterfall(
+        templates_ts,
+        templates,
+        y_mode="time",
+        beat_times=beat_times,
+        save_path=DEFAULT_OUTPUT / "ecg_waterfall_3d_all_time.png",
         elev=30,
         azim=-60,
         linewidth=1.0
@@ -853,6 +944,9 @@ if __name__ == "__main__":
     plot_ecg_surface_plotly(
         templates_ts,
         templates,
+        beat_times=beat_times,
+        y_mode="time",
         save_path=DEFAULT_OUTPUT / "ecg_surface.html"
     )
 
+    
