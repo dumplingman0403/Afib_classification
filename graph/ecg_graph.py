@@ -15,6 +15,16 @@ DEFAULT_OUTPUT = Path("graph/output")
 DEFAULT_FS = 300
 DEFAULT_SCALE = 1000.0
 
+plt.rcParams.update({
+    "font.size":        7,
+    "axes.titlesize":   7,
+    "axes.labelsize":   7,
+    "xtick.labelsize":  6,
+    "ytick.labelsize":  6,
+    "legend.fontsize":  6,
+    "lines.linewidth":  0.8,
+})
+
 
 ecg = loadmat(DEFAULT_INPUT)["val"][0] / DEFAULT_SCALE
 
@@ -29,9 +39,20 @@ ts, filt_ecg, rpeaks, templates_ts, templates, heart_rate_ts, heart_rate = ecgpr
 
 beat_times = rpeaks / DEFAULT_FS
 
-def plot_ecg(ecg=ecg, ts=ts, filt_ecg=filt_ecg, rpeaks=rpeaks, dot=False, save=DEFAULT_OUTPUT / "ecg_plot.png", show=False):
+
+def _save_fig(save_path, dpi, fmt=None, pad_inches=0.1):
+    """Save current figure. fmt overrides save_path extension if provided."""
+    if save_path is None:
+        return
+    save_path = Path(save_path)
+    if fmt is not None:
+        save_path = save_path.with_suffix(f".{fmt.lower()}")
+    plt.savefig(save_path, dpi=dpi, bbox_inches="tight", pad_inches=pad_inches)
+
+
+def plot_ecg(ecg=ecg, ts=ts, filt_ecg=filt_ecg, rpeaks=rpeaks, dot=False, save=DEFAULT_OUTPUT / "ecg_plot.png", fmt=None, show=False):
     
-    plt.figure(figsize=(8, 4), dpi=300)
+    plt.figure(figsize=(3.37, 1.7), dpi=300)
 
     ymin = np.min(filt_ecg)
     ymax = np.max(filt_ecg)
@@ -56,9 +77,10 @@ def plot_ecg(ecg=ecg, ts=ts, filt_ecg=filt_ecg, rpeaks=rpeaks, dot=False, save=D
     plt.xlabel("Time (s)")
     plt.ylabel("Amplitude (mV)")
     plt.legend(loc="upper left")
+    plt.xlim(0, 30)
     plt.grid()
     plt.tight_layout()
-    plt.savefig(save, dpi=600, bbox_inches="tight")
+    _save_fig(save, dpi=600, fmt=fmt)
     if show:
         plt.show()
     plt.close()
@@ -431,7 +453,9 @@ def plot_ecg_2d_waterfall(
     beat_times=None,
     y_mode="time",
     offset=1.0,
+    linewidth=0.6,
     save_path=None,
+    fmt=None,
     show_dpi=300,
     save_dpi=600,
     show_rpeak=True
@@ -476,7 +500,7 @@ def plot_ecg_2d_waterfall(
 
     colors = cm.viridis(np.linspace(0, 1, n_beats))
 
-    fig = plt.figure(figsize=(7, 4), dpi=show_dpi)
+    fig = plt.figure(figsize=(3.37, 1.7), dpi=show_dpi)
     ax = fig.add_subplot(111)
 
     for i, beat in enumerate(templates):
@@ -484,7 +508,7 @@ def plot_ecg_2d_waterfall(
             templates_ts,
             beat + y_plot[i] * offset,
             color=colors[i],
-            linewidth=1.2
+            linewidth=linewidth
         )
 
     if show_rpeak:
@@ -501,8 +525,7 @@ def plot_ecg_2d_waterfall(
     ax.grid(alpha=0.3)
     plt.tight_layout()
 
-    if save_path:
-        plt.savefig(save_path, dpi=save_dpi, bbox_inches="tight")
+    _save_fig(save_path, dpi=save_dpi, fmt=fmt)
 
     plt.show()
     plt.close()
@@ -514,11 +537,12 @@ def plot_ecg_3d_waterfall(
     beat_indices=None,
     y_mode="time",  # "time" or "index"
     save_path=None,
+    fmt=None,
     show_dpi=300,
     save_dpi=600,
     elev=25,
     azim=-60,
-    linewidth=1.2
+    linewidth=0.15
 ):
     """
     3D waterfall plot for ECG beat-to-beat variation
@@ -567,7 +591,7 @@ def plot_ecg_3d_waterfall(
         raise ValueError("y_mode must be 'time' or 'index'")
     colors = cm.viridis(np.linspace(0, 1, n_beats))
 
-    fig = plt.figure(figsize=(8, 6), dpi=show_dpi)
+    fig = plt.figure(figsize=(3.37, 3.37), dpi=show_dpi)
     ax = fig.add_subplot(111, projection="3d")
 
     for i, beat in enumerate(templates):
@@ -577,12 +601,13 @@ def plot_ecg_3d_waterfall(
             np.full_like(templates_ts, y_plot[i]),
             beat,
             color=colors[i],
-            linewidth=linewidth
+            linewidth=linewidth,
+            alpha=0.8
         )
 
-    ax.set_xlabel("Time relative to R-peak (s)", labelpad=8)
-    ax.set_ylabel(ylabel, labelpad=8)
-    ax.set_zlabel("Amplitude (mV)", labelpad=8)
+    ax.set_xlabel("Time relative to R-peak (s)", labelpad=1)
+    ax.set_ylabel(ylabel, labelpad=3)
+    ax.set_zlabel("Amplitude (mV)", labelpad=3)
 
     # y ticks
     tick_count = min(6, n_beats)
@@ -600,16 +625,11 @@ def plot_ecg_3d_waterfall(
     )
 
     ax.view_init(elev=elev, azim=azim)
+    ax.tick_params(axis="x", pad=0)
 
-    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95)
+    fig.subplots_adjust(left=0.15, right=0.9, bottom=0.15, top=0.9)
 
-    if save_path:
-
-        plt.savefig(
-            save_path,
-            dpi=save_dpi,
-            bbox_inches="tight"
-        )
+    _save_fig(save_path, dpi=save_dpi, fmt=fmt, pad_inches=0.3)
 
     plt.show()
 
@@ -894,7 +914,8 @@ if __name__ == "__main__":
         filt_ecg=filt_ecg,
         rpeaks=rpeaks,
         dot=False,
-        save=DEFAULT_OUTPUT / "ecg_plot.png",
+        save=DEFAULT_OUTPUT / "ecg_plot.svg",
+        fmt="svg",
         show=True
     )
     
@@ -903,16 +924,17 @@ if __name__ == "__main__":
         templates[:15],
         beat_times=beat_times[:15],
         offset=3,
-        save_path=DEFAULT_OUTPUT / "ecg_waterfall_2d_15_time.png"
+        save_path=DEFAULT_OUTPUT / "ecg_waterfall_2d_15_time.svg",
+        fmt="svg"
     )
 
-    plot_ecg_2d_waterfall(
-        templates_ts,
-        templates,
-        beat_times=beat_times,
-        offset=3,
-        save_path=DEFAULT_OUTPUT / "ecg_waterfall_2d_all_time.png"
-    )
+    # plot_ecg_2d_waterfall(
+    #     templates_ts,
+    #     templates,
+    #     beat_times=beat_times,
+    #     offset=3,
+    #     save_path=DEFAULT_OUTPUT / "ecg_waterfall_2d_all_time.png"
+    # )
 
     
 
@@ -922,7 +944,8 @@ if __name__ == "__main__":
         templates[:15],
         y_mode="time",
         beat_times=beat_times[:15],
-        save_path=DEFAULT_OUTPUT / "ecg_waterfall_3d_15_time.png",
+        save_path=DEFAULT_OUTPUT / "ecg_waterfall_3d_15_time.svg",
+        fmt="svg",
         elev=30,
         azim=-60,
         linewidth=1.0
@@ -934,19 +957,20 @@ if __name__ == "__main__":
         templates,
         y_mode="time",
         beat_times=beat_times,
-        save_path=DEFAULT_OUTPUT / "ecg_waterfall_3d_all_time.png",
+        save_path=DEFAULT_OUTPUT / "ecg_waterfall_3d_all_time.svg",
+        fmt="svg",
         elev=30,
         azim=-60,
         linewidth=1.0
     )
 
 
-    plot_ecg_surface_plotly(
-        templates_ts,
-        templates,
-        beat_times=beat_times,
-        y_mode="time",
-        save_path=DEFAULT_OUTPUT / "ecg_surface.html"
-    )
+    # plot_ecg_surface_plotly(
+    #     templates_ts,
+    #     templates,
+    #     beat_times=beat_times,
+    #     y_mode="time",
+    #     save_path=DEFAULT_OUTPUT / "ecg_surface.html"
+    # )
 
     
